@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: radial-gradient(1200px 800px at 50% -10%, #1b2450 0%, #0b1020 55%, #070a16 100%);
+  color: #eef2ff;
+  font-family: ui-rounded, "Baloo 2", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Moving current dots along a wire */
+@keyframes flowdot {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+
+/* Confetti fall */
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+  position: fixed;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.glow-bulb {
+  filter: drop-shadow(0 0 14px #ffd23f) drop-shadow(0 0 30px #ff8a1e);
+}
+.glow-led {
+  filter: drop-shadow(0 0 12px #7CFF6B) drop-shadow(0 0 24px #3ddc84);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -57,4 +57,4 @@ No settings or environment variables are needed.
 
 ---
 
-Created by Aniket, Class 7 — Giochi di Scienza 2026. Built with AI.
+Developed by Aniket Deep Mathur, Class 7 — Giochi di Scienza 2026. Built with AI.

@@ -11,7 +11,7 @@ import Confetti from "./Confetti";
 
 type Screen = "title" | "map" | "play" | "victory" | "sandbox";
 
-const PLAYER = "Aniket";
+const PLAYER = "Aniket Deep Mathur";
 
 export default function GameEngine() {
   const [screen, setScreen] = useState<Screen>("title");
@@ -132,7 +132,8 @@ export default function GameEngine() {
           </div>
 
           <p className="mt-8 text-xs text-slate-500">
-            Created by Aniket, Class 7 — Giochi di Scienza 2026. Built with AI.
+            Developed by Aniket Deep Mathur, Class 7 — Giochi di Scienza 2026.
+            Built with AI.
           </p>
         </div>
       )}

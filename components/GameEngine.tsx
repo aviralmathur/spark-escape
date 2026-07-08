@@ -91,6 +91,18 @@ export default function GameEngine() {
             room — and learn real science along the way.
           </p>
 
+          <div className="mt-5 rounded-2xl border-2 border-spark/70 bg-spark/10 px-6 py-3 shadow-[0_0_24px_rgba(255,210,63,0.25)]">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-300">
+              A game by
+            </p>
+            <p className="text-2xl font-black text-spark drop-shadow-[0_0_12px_rgba(255,210,63,0.4)] sm:text-3xl">
+              Aniket Deep Mathur
+            </p>
+            <p className="text-xs font-semibold text-slate-300">
+              Class 7 · Giochi di Scienza 2026
+            </p>
+          </div>
+
           <div className="mt-6 flex w-full max-w-xs flex-col gap-3">
             <button
               onClick={() => {
@@ -131,10 +143,7 @@ export default function GameEngine() {
             </button>
           </div>
 
-          <p className="mt-8 text-xs text-slate-500">
-            Developed by Aniket Deep Mathur, Class 7 — Giochi di Scienza 2026.
-            Built with AI.
-          </p>
+          <p className="mt-8 text-xs text-slate-500">Built with AI.</p>
         </div>
       )}
 
@@ -196,6 +205,9 @@ export default function GameEngine() {
             Sparky lit the whole house! You earned{" "}
             <span className="text-spark">{totalStars} ★</span> and mastered{" "}
             {Object.values(learned).filter(Boolean).length} circuit concepts.
+          </p>
+          <p className="mt-3 text-base font-black text-spark sm:text-lg">
+            🏆 {PLAYER}, Class 7 — Master Engineer!
           </p>
           {!allDone && (
             <p className="mt-2 max-w-md text-sm text-slate-400">

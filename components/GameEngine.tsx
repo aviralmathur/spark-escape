@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LEVELS } from "@/lib/levels";
+import { LEVELS, SANDBOX } from "@/lib/levels";
 import { playClick, playVictory, setMuted } from "@/lib/audio";
 import LevelPlay from "./LevelPlay";
 import LevelMap from "./LevelMap";
@@ -9,7 +9,7 @@ import ScienceNotebook from "./ScienceNotebook";
 import ProfessorVolt from "./ProfessorVolt";
 import Confetti from "./Confetti";
 
-type Screen = "title" | "map" | "play" | "victory";
+type Screen = "title" | "map" | "play" | "victory" | "sandbox";
 
 const PLAYER = "Aniket";
 
@@ -120,6 +120,15 @@ export default function GameEngine() {
             >
               📒 Science Notebook
             </button>
+            <button
+              onClick={() => {
+                playClick();
+                setScreen("sandbox");
+              }}
+              className="min-h-[52px] rounded-2xl bg-purple-500/80 text-lg font-bold text-white hover:bg-purple-500"
+            >
+              🔬 Free Play (Sandbox)
+            </button>
           </div>
 
           <p className="mt-8 text-xs text-slate-500">
@@ -152,6 +161,21 @@ export default function GameEngine() {
           onExitToMap={() => {
             playClick();
             setScreen("map");
+          }}
+          onOpenNotebook={() => setNotebook(true)}
+        />
+      )}
+
+      {screen === "sandbox" && (
+        <LevelPlay
+          key="sandbox"
+          level={SANDBOX}
+          isLast={false}
+          onComplete={() => {}}
+          onNext={() => {}}
+          onExitToMap={() => {
+            playClick();
+            setScreen("title");
           }}
           onOpenNotebook={() => setNotebook(true)}
         />

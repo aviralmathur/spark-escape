@@ -54,6 +54,7 @@ export interface Level {
   maxCells?: number; // cap for the tappable battery stack
   goalText?: string; // shown as the on-board objective
   check?: NetCheck; // custom win/lose logic using the solver result
+  sandbox?: boolean; // free-play: no win, infinite tray, live readouts
 }
 
 // Helper: find a slot id by role for use inside network checks.
@@ -456,3 +457,48 @@ export const LEVELS: Level[] = [
     },
   },
 ];
+
+// ============================ FREE PLAY ====================================
+// A breadboard with two rungs (two series slots each) between + and – rails.
+// Drop anything anywhere, tap the battery to change voltage, and watch the
+// real circuit respond. No goal — pure experimentation.
+export const SANDBOX: Level = {
+  id: 99,
+  room: "Workshop",
+  emoji: "🔬",
+  difficulty: "Expert",
+  title: "Free Play",
+  goal: "Build any circuit you like and see what happens!",
+  required: "bulb",
+  network: true,
+  sandbox: true,
+  maxCells: 8,
+  goalText:
+    "Free Play — drop parts into the 4 gaps, tap the battery for more cells, tap parts to flip/switch/remove. Try series vs parallel, or make a short!",
+  learn: [],
+  card: "",
+  proHint:
+    "Two bulbs side-by-side (one in each rung) = parallel = both bright. Two bulbs in the same rung = series = dim. A plain wire across a rung = a short!",
+  tray: ["wire", "bulb", "led", "switch", "resistor", "fuse", "coin", "eraser"],
+  nodes: {
+    A: { x: 150, y: 380 },
+    B: { x: 570, y: 380 },
+    LM: { x: 150, y: 245 },
+    LT: { x: 150, y: 110 },
+    RM: { x: 570, y: 245 },
+    RT: { x: 570, y: 110 },
+    MT: { x: 360, y: 110 },
+    MM: { x: 360, y: 245 },
+  },
+  slots: [
+    { role: "cell", from: "A", to: "B", x: 360, y: 380, initial: { type: "cell", count: 2 }, locked: true },
+    { role: "wire", from: "A", to: "LM", x: 150, y: 312, initial: { type: "wire" }, locked: true },
+    { role: "wire", from: "LM", to: "LT", x: 150, y: 178, initial: { type: "wire" }, locked: true },
+    { role: "wire", from: "B", to: "RM", x: 570, y: 312, initial: { type: "wire" }, locked: true },
+    { role: "wire", from: "RM", to: "RT", x: 570, y: 178, initial: { type: "wire" }, locked: true },
+    { role: "gap", from: "LT", to: "MT", x: 255, y: 110, hint: "?" },
+    { role: "gap", from: "MT", to: "RT", x: 465, y: 110, hint: "?" },
+    { role: "gap", from: "LM", to: "MM", x: 255, y: 245, hint: "?" },
+    { role: "gap", from: "MM", to: "RM", x: 465, y: 245, hint: "?" },
+  ],
+};

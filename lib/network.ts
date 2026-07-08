@@ -129,6 +129,11 @@ function mnaSolve(
     z[n + k] = s.E;
   });
 
+  // GMIN: a tiny conductance from every node to ground. This keeps the matrix
+  // non-singular even when a node is isolated (e.g. an empty gap leaves a
+  // dangling junction), without affecting real currents.
+  for (let i = 0; i < n; i++) A[i][i] += 1e-9;
+
   const x = solveLinear(A, z);
   if (!x) return null;
   const V = new Map<string, number>();

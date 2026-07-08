@@ -65,7 +65,7 @@ export default function LevelPlay({
   onExitToMap,
   onOpenNotebook,
 }: Props) {
-  const [phase, setPhase] = useState<Phase>("learn");
+  const [phase, setPhase] = useState<Phase>(level.sandbox ? "play" : "learn");
   const [slots, setSlots] = useState<RSlot[]>(() => buildSlots(level));
   const [tray, setTray] = useState<TrayItem[]>(() => buildTray(level));
   const [result, setResult] = useState<SimResult | null>(null);
@@ -88,7 +88,7 @@ export default function LevelPlay({
 
   // Reset everything when the level changes.
   useEffect(() => {
-    setPhase("learn");
+    setPhase(level.sandbox ? "play" : "learn");
     setSlots(buildSlots(level));
     setTray(buildTray(level));
     setResult(null);
@@ -230,17 +230,24 @@ export default function LevelPlay({
       setSlots((prev) => {
         const slot = prev.find((s) => s.id === slotId);
         if (!slot || slot.locked) return prev;
-        const freedTrayId = slot.trayId;
-        setTray((t) =>
-          t.map((ti) => {
-            if (ti.id === d.trayId) return { ...ti, used: true };
-            if (freedTrayId && ti.id === freedTrayId) return { ...ti, used: false };
-            return ti;
-          })
-        );
+        // Sandbox has an infinite tray — never consume or track tray items.
+        if (!level.sandbox) {
+          const freedTrayId = slot.trayId;
+          setTray((t) =>
+            t.map((ti) => {
+              if (ti.id === d.trayId) return { ...ti, used: true };
+              if (freedTrayId && ti.id === freedTrayId) return { ...ti, used: false };
+              return ti;
+            })
+          );
+        }
         return prev.map((s) =>
           s.id === slotId
-            ? { ...s, placed: { type: d.type, flipped: false, closed: false }, trayId: d.trayId }
+            ? {
+                ...s,
+                placed: { type: d.type, flipped: false, closed: false },
+                trayId: level.sandbox ? undefined : d.trayId,
+              }
             : s
         );
       });
@@ -248,7 +255,7 @@ export default function LevelPlay({
       setProf(null);
       playClick();
     },
-    []
+    [level.sandbox]
   );
 
   useEffect(() => {
@@ -408,7 +415,7 @@ export default function LevelPlay({
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Level {level.id} · {level.emoji} {level.room}
+            {level.sandbox ? "🔬 Sandbox" : `Level ${level.id} · ${level.emoji} ${level.room}`}
           </div>
           <h2 className="text-xl font-extrabold text-spark">{level.title}</h2>
         </div>
@@ -537,17 +544,41 @@ export default function LevelPlay({
             </div>
           )}
 
+          {/* sandbox live readout */}
+          {level.sandbox && net && (
+            <div className="mx-auto mb-2 max-w-xl rounded-2xl bg-white/5 p-3">
+              <div className="flex items-center justify-around text-center text-sm">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-400">Battery</div>
+                  <div className="font-black text-spark">{net.hasCell ? `${1.5 * (slots.find((s) => s.placed?.type === "cell")?.placed?.count ?? 1)} V` : "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-400">Current</div>
+                  <div className="font-black text-white">{net.sourceCurrent.toFixed(2)} A</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-slate-400">Status</div>
+                  <div className={"font-black " + (net.short || net.burntBulbs.length || net.blownFuses.length ? "text-red-300" : net.litSlots.length ? "text-green-300" : "text-slate-300")}>
+                    {net.short ? "⚠ Short!" : net.blownFuses.length ? "💥 Fuse blew" : net.burntBulbs.length ? "💥 Burnt out" : net.litSlots.length ? "💡 Lit!" : "Off"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <ComponentTray items={tray} onItemPointerDown={startDrag} />
 
           {/* controls */}
           {phase === "play" && !timingActive && (
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              <button
-                onClick={level.network ? powerOnNetwork : powerOn}
-                className="min-h-[56px] flex-1 rounded-2xl bg-gradient-to-b from-spark to-sparkhot px-6 text-xl font-black text-slate-900 shadow-lg transition hover:brightness-105 active:scale-[0.98]"
-              >
-                {level.network ? "✓ CHECK CIRCUIT" : "⚡ POWER ON"}
-              </button>
+              {!level.sandbox && (
+                <button
+                  onClick={level.network ? powerOnNetwork : powerOn}
+                  className="min-h-[56px] flex-1 rounded-2xl bg-gradient-to-b from-spark to-sparkhot px-6 text-xl font-black text-slate-900 shadow-lg transition hover:brightness-105 active:scale-[0.98]"
+                >
+                  {level.network ? "✓ CHECK CIRCUIT" : "⚡ POWER ON"}
+                </button>
+              )}
               <button
                 onClick={() => {
                   playClick();

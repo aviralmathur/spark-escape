@@ -7,7 +7,10 @@ interface Props {
   size?: number;
   flipped?: boolean;
   closed?: boolean; // switch
-  lit?: boolean; // bulb / led glowing
+  lit?: boolean; // bulb / led glowing (on/off)
+  bright?: number; // 0..1 brightness (overrides lit when provided)
+  count?: number; // cell stack size
+  blown?: boolean; // fuse blown
 }
 
 /** Inline-SVG art for every game component. No external images. */
@@ -17,9 +20,15 @@ export default function ComponentIcon({
   flipped = false,
   closed = false,
   lit = false,
+  bright,
+  count,
+  blown = false,
 }: Props) {
   const s = size;
   const flip = flipped ? "scaleX(-1)" : undefined;
+  // Effective brightness: explicit `bright` wins, else on/off from `lit`.
+  const b = bright != null ? bright : lit ? 1 : 0;
+  const on = b > 0.02;
 
   switch (type) {
     case "cell":
@@ -29,6 +38,14 @@ export default function ComponentIcon({
           <rect x="44" y="27" width="6" height="10" rx="1.5" fill="#cbd5e1" stroke="#64748b" strokeWidth="1.5" />
           <text x="16" y="37" fontSize="16" fontWeight="800" fill="#fff">+</text>
           <text x="34" y="37" fontSize="18" fontWeight="800" fill="#fff">–</text>
+          {count && count > 1 && (
+            <>
+              <circle cx="27" cy="14" r="11" fill="#f59e0b" stroke="#7c2d12" strokeWidth="2" />
+              <text x={count >= 10 ? 18 : 22} y="19" fontSize="13" fontWeight="900" fill="#fff">
+                {count}×
+              </text>
+            </>
+          )}
         </svg>
       );
     case "wire":
@@ -50,10 +67,16 @@ export default function ComponentIcon({
       );
     case "bulb":
       return (
-        <svg width={s} height={s} viewBox="0 0 64 64" className={lit ? "glow-bulb" : ""}>
-          <circle cx="32" cy="26" r="18" fill={lit ? "#ffe680" : "#5b6480"} stroke={lit ? "#f59e0b" : "#3b4260"} strokeWidth="2" />
-          {lit && <circle cx="26" cy="20" r="5" fill="#fffbe6" opacity="0.9" />}
-          <path d="M25 22 l4 8 l6 -12 l4 8" stroke={lit ? "#b45309" : "#2b3150"} strokeWidth="2" fill="none" />
+        <svg
+          width={s}
+          height={s}
+          viewBox="0 0 64 64"
+          className={on ? "glow-bulb" : ""}
+          style={on ? { opacity: 0.55 + 0.45 * b } : undefined}
+        >
+          <circle cx="32" cy="26" r="18" fill={on ? "#ffe680" : "#5b6480"} stroke={on ? "#f59e0b" : "#3b4260"} strokeWidth="2" />
+          {on && <circle cx="26" cy="20" r="5" fill="#fffbe6" opacity="0.9" />}
+          <path d="M25 22 l4 8 l6 -12 l4 8" stroke={on ? "#b45309" : "#2b3150"} strokeWidth="2" fill="none" />
           <rect x="24" y="42" width="16" height="10" rx="2" fill="#94a3b8" stroke="#475569" strokeWidth="1.5" />
           <line x1="26" y1="46" x2="38" y2="46" stroke="#475569" strokeWidth="1.5" />
           <line x1="26" y1="49" x2="38" y2="49" stroke="#475569" strokeWidth="1.5" />
@@ -61,14 +84,38 @@ export default function ComponentIcon({
       );
     case "led":
       return (
-        <svg width={s} height={s} viewBox="0 0 64 64" style={{ transform: flip }} className={lit ? "glow-led" : ""}>
+        <svg width={s} height={s} viewBox="0 0 64 64" style={{ transform: flip, ...(on ? { opacity: 0.6 + 0.4 * b } : {}) }} className={on ? "glow-led" : ""}>
           {/* dome */}
-          <path d="M20 34 a12 12 0 0 1 24 0 v4 h-24 z" fill={lit ? "#7CFF6B" : "#5b6480"} stroke={lit ? "#22c55e" : "#3b4260"} strokeWidth="2" />
-          <rect x="20" y="36" width="24" height="4" fill={lit ? "#22c55e" : "#3b4260"} />
+          <path d="M20 34 a12 12 0 0 1 24 0 v4 h-24 z" fill={on ? "#7CFF6B" : "#5b6480"} stroke={on ? "#22c55e" : "#3b4260"} strokeWidth="2" />
+          <rect x="20" y="36" width="24" height="4" fill={on ? "#22c55e" : "#3b4260"} />
           {/* legs: long (+) on the left, short (-) on the right */}
           <line x1="26" y1="40" x2="26" y2="58" stroke="#cbd5e1" strokeWidth="2.5" />
           <line x1="38" y1="40" x2="38" y2="52" stroke="#cbd5e1" strokeWidth="2.5" />
-          <text x="21" y="30" fontSize="12" fontWeight="800" fill={lit ? "#14532d" : "#94a3b8"}>+</text>
+          <text x="21" y="30" fontSize="12" fontWeight="800" fill={on ? "#14532d" : "#94a3b8"}>+</text>
+        </svg>
+      );
+    case "fuse":
+      return (
+        <svg width={s} height={s * 0.6} viewBox="0 0 64 40">
+          <rect x="8" y="10" width="48" height="20" rx="6" fill="none" stroke={blown ? "#ef4444" : "#94a3b8"} strokeWidth="2.5" />
+          <circle cx="8" cy="20" r="4" fill="#cbd5e1" />
+          <circle cx="56" cy="20" r="4" fill="#cbd5e1" />
+          {blown ? (
+            <>
+              <path d="M18 20 l10 -6 l-4 6 l10 6" stroke="#ef4444" strokeWidth="2.5" fill="none" />
+              <text x="40" y="24" fontSize="12">💥</text>
+            </>
+          ) : (
+            <line x1="16" y1="20" x2="48" y2="20" stroke="#f59e0b" strokeWidth="2.5" />
+          )}
+        </svg>
+      );
+    case "resistor":
+      return (
+        <svg width={s} height={s * 0.5} viewBox="0 0 64 32">
+          <line x1="2" y1="16" x2="14" y2="16" stroke="#cbd5e1" strokeWidth="3" />
+          <path d="M14 16 l4 -8 l8 16 l8 -16 l8 16 l4 -8" stroke="#f59e0b" strokeWidth="3" fill="none" strokeLinejoin="round" />
+          <line x1="50" y1="16" x2="62" y2="16" stroke="#cbd5e1" strokeWidth="3" />
         </svg>
       );
     case "switch":

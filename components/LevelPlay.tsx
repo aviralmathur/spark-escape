@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Level } from "@/lib/levels";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Level, CheckSlot } from "@/lib/levels";
 import { SLOT_POS } from "@/lib/layout";
 import { Placed, Slot as SimSlot, SimResult } from "@/lib/types";
 import { simulate } from "@/lib/simulator";
+import { simulateNetwork, NetResult, NetSlot } from "@/lib/network";
 import { playClick, playError, playSuccess } from "@/lib/audio";
 import CircuitBoard, { RuntimeSlot } from "./CircuitBoard";
+import NetworkBoard, { NetRuntimeSlot } from "./NetworkBoard";
 import ComponentTray, { TrayItem } from "./ComponentTray";
 import ComponentIcon from "./ComponentIcon";
 import ProfessorVolt from "./ProfessorVolt";
@@ -25,6 +27,10 @@ type Phase = "learn" | "play" | "choice" | "won";
 
 interface RSlot extends RuntimeSlot {
   trayId?: string;
+  from?: string;
+  to?: string;
+  x?: number;
+  y?: number;
 }
 
 interface DragState {
@@ -41,6 +47,10 @@ function buildSlots(level: Level): RSlot[] {
     spec,
     placed: spec.initial ? { ...spec.initial } : null,
     locked: !!spec.locked,
+    from: spec.from,
+    to: spec.to,
+    x: spec.x,
+    y: spec.y,
   }));
 }
 function buildTray(level: Level): TrayItem[] {
@@ -116,7 +126,29 @@ export default function LevelPlay({
     []
   );
 
-  const working = phase === "won" || (result?.works ?? false);
+  // ---- network (real solver) glue -----------------------------------------
+  const toNetSlots = useCallback(
+    (rs: RSlot[]): NetSlot[] =>
+      rs.map((s) => ({
+        id: s.id,
+        a: s.from ?? "?",
+        b: s.to ?? "?",
+        placed: s.placed,
+        fillable: !!s.spec.accepts && !s.locked,
+      })),
+    []
+  );
+
+  // Live circuit solve for network levels — recomputes on every change so the
+  // board shows brightness / shorts / blown fuses in real time.
+  const net = useMemo<NetResult | null>(
+    () => (level.network ? simulateNetwork(toNetSlots(slots)) : null),
+    [level.network, slots, toNetSlots]
+  );
+
+  const working =
+    phase === "won" ||
+    (level.network ? false : result?.works ?? false);
 
   const finalizeWin = useCallback(
     (finalStars: number) => {
@@ -154,6 +186,25 @@ export default function LevelPlay({
       setProf({ text: res.reason, mood: "oops" });
     }
   }, [slots, level, wrong, toSimSlots, finalizeWin]);
+
+  // Power-on for network levels: evaluate the level's custom win-check.
+  const powerOnNetwork = useCallback(() => {
+    if (!net || !level.check) return;
+    const checkSlots: CheckSlot[] = slots.map((s) => ({
+      id: s.id,
+      placed: s.placed,
+      spec: s.spec,
+    }));
+    const verdict = level.check(net, checkSlots);
+    if (verdict.works) {
+      finalizeWin(Math.max(1, 3 - wrong));
+    } else {
+      playError();
+      setWrong((w) => w + 1);
+      setResult({ works: false, code: "open", reason: verdict.reason, culprit: verdict.culprit });
+      setProf({ text: verdict.reason, mood: "oops" });
+    }
+  }, [net, level, slots, wrong, finalizeWin]);
 
   // ---- drag & drop ---------------------------------------------------------
   const startDrag = (item: TrayItem, e: React.PointerEvent) => {
@@ -227,6 +278,17 @@ export default function LevelPlay({
       const slot = prev.find((s) => s.id === slotId);
       if (!slot || !slot.placed) return prev;
       const p = slot.placed;
+      // network levels: tapping the battery cycles the number of cells
+      if (level.network && p.type === "cell") {
+        const max = level.maxCells ?? 6;
+        const next = (p.count ?? 1) >= max ? 1 : (p.count ?? 1) + 1;
+        playClick();
+        setResult(null);
+        setProf(null);
+        return prev.map((s) =>
+          s.id === slotId ? { ...s, placed: { ...p, count: next } } : s
+        );
+      }
       if (p.type === "led") {
         playClick();
         setResult(null);
@@ -400,18 +462,41 @@ export default function LevelPlay({
       {phase !== "learn" && (
         <>
           <p className="mb-2 rounded-xl bg-white/5 px-3 py-2 text-center text-sm font-semibold text-slate-200">
-            🎯 {level.goal}
+            🎯 {level.network ? level.goalText ?? level.goal : level.goal}
           </p>
 
           {level.diagram && <BossDiagram />}
 
-          <CircuitBoard
-            slots={slots}
-            working={working}
-            culprit={result && !result.works ? result.culprit : undefined}
-            onSlotPointerDown={() => {}}
-            onSlotTap={onSlotTap}
-          />
+          {/* live danger banner for network levels */}
+          {level.network && net && phase === "play" && (net.short || net.blownFuses.length > 0 || net.burntBulbs.length > 0) && (
+            <div className="mx-auto mb-2 max-w-xl rounded-xl bg-red-500/20 px-3 py-2 text-center text-sm font-bold text-red-100 ring-1 ring-red-400/40">
+              {net.short && "⚠ SHORT CIRCUIT — huge current, no light!"}
+              {!net.short && net.blownFuses.length > 0 && "💥 The fuse has blown (it protected the circuit)."}
+              {!net.short && net.blownFuses.length === 0 && net.burntBulbs.length > 0 && "💥 A bulb burned out — too much current!"}
+            </div>
+          )}
+
+          {level.network && net ? (
+            <NetworkBoard
+              nodes={level.nodes ?? {}}
+              slots={slots as unknown as NetRuntimeSlot[]}
+              brightness={net.brightness}
+              current={net.current}
+              blownFuses={net.blownFuses}
+              warning={net.short ? "short" : net.blownFuses.length ? "blown" : net.burntBulbs.length ? "burnt" : null}
+              culprit={result && !result.works ? result.culprit : undefined}
+              onSlotPointerDown={() => {}}
+              onSlotTap={onSlotTap}
+            />
+          ) : (
+            <CircuitBoard
+              slots={slots}
+              working={working}
+              culprit={result && !result.works ? result.culprit : undefined}
+              onSlotPointerDown={() => {}}
+              onSlotTap={onSlotTap}
+            />
+          )}
 
           {/* professor feedback */}
           {prof && phase !== "won" && (
@@ -458,10 +543,10 @@ export default function LevelPlay({
           {phase === "play" && !timingActive && (
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
               <button
-                onClick={powerOn}
+                onClick={level.network ? powerOnNetwork : powerOn}
                 className="min-h-[56px] flex-1 rounded-2xl bg-gradient-to-b from-spark to-sparkhot px-6 text-xl font-black text-slate-900 shadow-lg transition hover:brightness-105 active:scale-[0.98]"
               >
-                ⚡ POWER ON
+                {level.network ? "✓ CHECK CIRCUIT" : "⚡ POWER ON"}
               </button>
               <button
                 onClick={() => {

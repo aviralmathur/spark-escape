@@ -36,8 +36,8 @@ export default function ScienceNotebook({
         </div>
 
         <p className="mb-4 text-sm text-slate-300">
-          Concepts learnt: <b className="text-white">{learnedCount}/6</b> · Stars:{" "}
-          <b className="text-spark">{"★".repeat(Math.min(totalStars, 18)) || "—"}</b>
+          Concepts learnt: <b className="text-white">{learnedCount}/{LEVELS.length}</b> ·
+          Stars: <b className="text-spark">{totalStars} ★</b>
         </p>
 
         <div className="grid gap-3">
@@ -95,11 +95,12 @@ export default function ScienceNotebook({
             <p className="mt-2 text-sm">This certifies that</p>
             <p className="text-2xl font-black text-amber-800">{playerName}</p>
             <p className="mt-2 text-sm">
-              has mastered electric cells, bulbs, LEDs, switches, conductors,
-              insulators and circuit diagrams — and brought the lights back! ⚡
+              has mastered cells, bulbs, LEDs, switches, conductors, insulators,
+              circuit diagrams, voltage &amp; brightness, fuses, short circuits and
+              parallel circuits — and brought the lights back! ⚡
             </p>
             <p className="mt-3 text-lg font-bold text-amber-700">
-              {"★".repeat(6)} Class 7 · Electricity & Circuits
+              ★★★★★ Class 7 · Electricity &amp; Circuits
             </p>
           </div>
         )}

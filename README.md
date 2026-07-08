@@ -9,12 +9,26 @@ Built for the **Giochi di Scienza 2026** school science festival (5-minute demo 
 
 ## Levels
 
+**Basics**
+
 1. **The Electric Cell** (Kitchen) — cell terminals & current direction (+ → –)
 2. **The Electric Bulb** (Living Room) — closed vs open circuits (with a broken-wire trap)
 3. **The LED** (Bedroom) — LED polarity + energy efficiency
 4. **The Switch** (Study) — control a circuit, with a close-the-switch timing game
 5. **Conductors & Insulators** (Garage) — metals conduct, rubber/plastic block
 6. **BOSS — The Circuit Diagram** (Main Hall) — build a real circuit from NCERT symbols
+
+**Advanced & Expert** (powered by a real circuit solver)
+
+7. **Voltage & Brightness** (Attic) — stack cells for more voltage; too many burn out the bulb
+8. **The Fuse** (Fuse Box) — a fuse blows to protect the circuit from overload
+9. **Short Circuit!** (Basement) — find and break the shortcut that bypasses the bulb
+10. **Series vs Parallel** (Twin Room) — light two bulbs in parallel; a bare wire shorts the rails
+11. **BOSS — The Control Room** (capstone) — cells + fuse + switch + parallel load + LED, all balanced
+
+> Levels 7–11 run on `lib/network.ts`, a genuine DC circuit solver (Modified Nodal
+> Analysis with diode iteration and fuse blow-out). Brightness, series/parallel behaviour,
+> short circuits, burnout and fuses protecting the circuit all emerge from the physics.
 
 ## Tech
 

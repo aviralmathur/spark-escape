@@ -7,6 +7,8 @@ export type ComponentType =
   | "bulb"
   | "led"
   | "switch"
+  | "fuse"
+  | "resistor"
   // conductors
   | "coin"
   | "key"
@@ -26,6 +28,8 @@ export const LABELS: Record<ComponentType, string> = {
   bulb: "Bulb",
   led: "LED",
   switch: "Switch",
+  fuse: "Fuse",
+  resistor: "Resistor",
   coin: "Coin",
   key: "Key",
   foil: "Aluminium foil",
@@ -42,6 +46,8 @@ export interface Placed {
   flipped?: boolean;
   // For a switch: is it currently closed (conducting)?
   closed?: boolean;
+  // For a cell/battery: how many cells are stacked in series (1..n).
+  count?: number;
 }
 
 // A slot is one edge of the circuit graph, connecting node A to node B.
